@@ -1,0 +1,57 @@
+digraph OmniEats_System_Architecture {
+    compound = true;
+    rankdir = TB;
+    fontname = "Helvetica,Arial,sans-serif";
+    node [fontname = "Helvetica,Arial,sans-serif"; shape = box; style = rounded; margin = 0.2;];
+    edge [fontname = "Helvetica,Arial,sans-serif"; fontsize = 10;];
+    
+    client [label = "React Web Client";shape = ellipse;style = filled;fillcolor = "#e1f5fe";];
+    
+    subgraph cluster_kubernetes {
+        label = "Kubernetes Cluster";
+        style = dashed;
+        bgcolor = "#f9f9f9";
+        
+        gateway [label = "Spring Cloud Gateway\n(Entrypoint)";style = filled;fillcolor = "#c8e6c9";];
+        redis [label = "Redis Cache\n(JWT Tokens)";shape = cylinder;style = filled;fillcolor = "#ffcc80";];
+        
+        subgraph cluster_identity {
+            label = "Identity Domain";
+            style = filled;
+            color = "#bbdefb";
+            fillcolor = "#e3f2fd";
+            
+            id_svc [label = "Identity Service\n(Auth & Users)";shape = component;style = filled;fillcolor = white;];
+            id_db [label = "PostgreSQL\n(User Data)";shape = cylinder;style = filled;fillcolor = white;];
+        }
+        
+        subgraph cluster_restaurant {
+            label = "Restaurant & Order Domain (Multi-Tenant)";
+            style = filled;
+            color = "#c8e6c9";
+            fillcolor = "#e8f5e9";
+            
+            restA [label = "Restaurant A Serves\n([Pod 1] [Pod 2])";shape = component;style = filled;fillcolor = white;];
+            restB [label = "Restaurant B Serves\n([Pod 1] [Pod 2] [Pod n...])";shape = component;style = filled;fillcolor = white;];
+            
+            core_db [label = "Shared PostgreSQL\n(Menus & Orders)";shape = cylinder;style = filled;fillcolor = white;];
+        }
+        
+        obs [label = "Prometheus & Grafana\n(Passive Monitoring)";shape = note;style = filled;fillcolor = "#fff8e1";];
+    }
+    
+    // Gateway routing
+    client -> gateway [label = " HTTPS ";];
+    gateway -> id_svc [label = " /api/auth ";];
+    gateway -> restA [label = " /api/rest-a ";];
+    gateway -> restB [label = " /api/rest-b ";];
+    
+    // Redis caching logic
+    gateway -> redis [label = " Validate JWT ";];
+    id_svc -> redis [label = " Issue & Cache JWT ";];
+    
+    // Service to DB
+    id_svc -> id_db;
+    restA -> core_db;
+    restB -> core_db;
+}
