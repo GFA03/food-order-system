@@ -15,4 +15,3 @@ Diagrams are subject to change.
 ### Entity-Relationship Diagram
 
 ![Entity-Relationship Diagram](docs/er-diagram.svg)
-![Use Case Diagram](docs/use-case-diagram.svg)
