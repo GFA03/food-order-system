@@ -1,0 +1,26 @@
+digraph ER_Diagram {
+    rankdir = LR;
+    node [shape = box; style = filled; fillcolor = "#e1f5fe";];
+    edge [dir = both; arrowhead = none; arrowtail = none;];
+
+    User [label = "User\n- id\n- username\n- password\n- role"];
+    UserProfile [label = "UserProfile\n- id\n- user_id (FK)\n- delivery_coords\n- dietary_prefs"];
+
+    Restaurant [label = "Restaurant\n- id\n- name\n- operational_hours"];
+    MenuItem [label = "MenuItem\n- id\n- restaurant_id (FK)\n- name\n- price"];
+
+    Order [label = "Order\n- id\n- user_id (FK)\n- status"];
+    OrderItem [label = "OrderItem\n- id\n- order_id (FK)\n- menu_item_id (FK)\n- quantity"];
+
+    CuisineTag [label = "CuisineTag\n- id\n- name"];
+
+    // Relationships
+    UserProfile -> User [label = "1:1"; arrowhead = tee; arrowtail = tee;];
+    MenuItem -> Restaurant [label = "N:1"; arrowhead = crow; arrowtail = none;];
+    Order -> User [label = "N:1"; arrowhead = crow; arrowtail = none;];
+    OrderItem -> Order [label = "N:1"; arrowhead = crow; arrowtail = none;];
+    OrderItem -> MenuItem [label = "N:1"; arrowhead = crow; arrowtail = none;];
+
+    // Many-to-many between Restaurant and CuisineTag
+    Restaurant -> CuisineTag [label = "N:M"; arrowhead = crow; arrowtail = crow;];
+}
