@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: omnieats-postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: default_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d default_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: omnieats-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway-service:
+    build:
+      context: ../backend
+      dockerfile: gateway-service/Dockerfile
+    container_name: omnieats-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - identity-service
+      - restaurant-service
+      - ai-aggregator-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - IDENTITY_SERVICE_URL=http://identity-service:8081
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:8082
+      - AI_SERVICE_URL=http://ai-aggregator-service:8083
+    restart: unless-stopped
+
+  identity-service:
+    build:
+      context: ../backend
+      dockerfile: identity-service/Dockerfile
+    container_name: omnieats-identity
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      # Tell Spring to connect to the "postgres" container via internal docker DNS
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/identity_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    restart: unless-stopped
+
+  restaurant-service:
+    build:
+      context: ../backend
+      dockerfile: restaurant-service/Dockerfile
+    container_name: omnieats-restaurant
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/restaurant_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+    restart: unless-stopped
+
+  ai-aggregator-service:
+    build:
+      context: ../backend
+      dockerfile: ai-aggregator-service/Dockerfile
+    container_name: omnieats-ai
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
