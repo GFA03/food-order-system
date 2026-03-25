@@ -98,5 +98,16 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: omnieats-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway-service
+    restart: unless-stopped
+
 volumes:
   postgres-data:

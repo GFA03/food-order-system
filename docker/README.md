@@ -18,7 +18,12 @@ Start PostgreSQL and Redis silently in the background:
 docker compose up -d
 ```
 
-### 2. Verify Database Health
+### 2. Access the Application
+Once the containers have finished bootstrapping, open your browser:
+- **Web Frontend (React)**: [http://localhost:3000](http://localhost:3000)
+- **API Gateway**: [http://localhost:8080](http://localhost:8080)
+
+### 3. Verify Health
 Check that the containers are healthy and running:
 ```bash
 docker compose ps
