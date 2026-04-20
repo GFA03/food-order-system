@@ -1,6 +1,15 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,58 +21,82 @@ export default function Navbar() {
           </Link>
 
           {/* Nav links */}
-          <div className="hidden md:flex items-center gap-6">
-            <NavLink
-              to="/restaurants"
-              className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
-              }
-            >
-              Restaurants
-            </NavLink>
-            <NavLink
-              to="/orders"
-              className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
-              }
-            >
-              Orders
-            </NavLink>
-            <NavLink
-              to="/ai-search"
-              className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
-              }
-            >
-              AI Search
-            </NavLink>
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
-              }
-            >
-              Profile
-            </NavLink>
-          </div>
+          {isAuthenticated && (
+            <div className="hidden md:flex items-center gap-6">
+              <NavLink
+                to="/restaurants"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                }
+              >
+                Restaurants
+              </NavLink>
+              <NavLink
+                to="/orders"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                }
+              >
+                Orders
+              </NavLink>
+              <NavLink
+                to="/ai-search"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                }
+              >
+                AI Search
+              </NavLink>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                }
+              >
+                Profile
+              </NavLink>
+              {user?.roles.includes('ADMIN') && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                  }
+                >
+                  Admin
+                </NavLink>
+              )}
+            </div>
+          )}
 
           {/* Right side */}
           <div className="flex items-center gap-4">
-            <NavLink
-              to="/cart"
-              className={({ isActive }) =>
-                `relative text-sm font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
-              }
-              aria-label="Cart"
-            >
-              🛒
-            </NavLink>
-            <Link
-              to="/login"
-              className="text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors"
-            >
-              Login
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <NavLink
+                  to="/cart"
+                  className={({ isActive }) =>
+                    `text-xl transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                  }
+                  aria-label="Cart"
+                >
+                  🛒
+                </NavLink>
+                <span className="text-sm text-gray-600 hidden sm:block">{user?.name}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-gray-600 hover:text-red-500 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg transition-colors"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
