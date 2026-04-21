@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './components/ui/Toast';
 import router from './router';
 
 const queryClient = new QueryClient({
@@ -19,7 +20,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </CartProvider>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
