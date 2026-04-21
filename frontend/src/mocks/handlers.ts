@@ -87,18 +87,40 @@ const SAMPLE_ORDERS: Order[] = [
   },
 ];
 
-const MOCK_USER: UserWithProfile = {
-  id: 'u1',
-  email: 'user@omnieats.com',
-  name: 'Alex Demo',
-  roles: ['USER'],
-  profile: {
-    deliveryAddress: '123 Main St, Bucharest',
-    latitude: 44.4268,
-    longitude: 26.1025,
-    dietaryPreferences: ['Vegan'],
-  },
+type MockAuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  roles: string[];
+  profile: UserWithProfile['profile'];
 };
+
+const SEEDED_PROFILE: UserWithProfile['profile'] = {
+  deliveryAddress: 'Strada Academiei 14, Bucuresti',
+  latitude: 44.4362,
+  longitude: 26.0976,
+  dietaryPreferences: ['Vegan'],
+};
+
+const SEEDED_USER: MockAuthUser = {
+  id: 'u1',
+  email: 'rares.papusoi@omnieats.dev',
+  name: 'Rares Papusoi',
+  password: 'password123',
+  roles: ['USER'],
+  profile: SEEDED_PROFILE,
+};
+
+let nextMockUserId = 2;
+
+const mockUsersByEmail = new Map<string, MockAuthUser>([
+  [SEEDED_USER.email.toLowerCase(), { ...SEEDED_USER, profile: { ...SEEDED_PROFILE } }],
+]);
+
+const mockUsersById = new Map<string, MockAuthUser>([
+  [SEEDED_USER.id, { ...SEEDED_USER, profile: { ...SEEDED_PROFILE } }],
+]);
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -114,34 +136,127 @@ function paginate<T>(items: T[], page: number, size: number): PaginatedResponse<
   };
 }
 
+function toUserWithProfile(user: MockAuthUser): UserWithProfile {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    roles: [...user.roles],
+    profile: { ...user.profile },
+  };
+}
+
+function toAuthUser(user: MockAuthUser) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    roles: [...user.roles],
+  };
+}
+
+function issueMockToken(user: MockAuthUser): string {
+  const payload = btoa(JSON.stringify({
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    roles: user.roles,
+    exp: Date.now() / 1000 + 3600,
+  }));
+  return `eyJhbGciOiJIUzI1NiJ9.${payload}.fake-signature`;
+}
+
+function parseMockToken(token: string): { sub?: string } {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return {};
+    return JSON.parse(atob(payload)) as { sub?: string };
+  } catch {
+    return {};
+  }
+}
+
+function getUserFromRequest(request: Request): MockAuthUser | null {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice('Bearer '.length);
+  const payload = parseMockToken(token);
+  if (!payload.sub) return null;
+  return mockUsersById.get(payload.sub) ?? null;
+}
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 export const handlers = [
   // Auth
   http.post('/api/auth/login', async ({ request }) => {
     const body = await request.json() as { email: string; password: string };
-    if (body.email && body.password) {
-      // Fake JWT (header.payload.signature — not cryptographically valid)
-      const payload = btoa(JSON.stringify({ sub: 'u1', roles: ['USER'], exp: Date.now() / 1000 + 3600 }));
-      return HttpResponse.json({
-        token: `eyJhbGciOiJIUzI1NiJ9.${payload}.fake-signature`,
-        user: { id: 'u1', email: body.email, name: 'Alex Demo', roles: ['USER'] },
-      });
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password?.trim();
+    if (!email || !password) {
+      return HttpResponse.json({ message: 'Email and password are required.' }, { status: 400 });
     }
-    return HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+
+    const user = mockUsersByEmail.get(email);
+    if (!user || user.password !== password) {
+      return HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    }
+
+    return HttpResponse.json({
+      token: issueMockToken(user),
+      user: toAuthUser(user),
+    });
   }),
 
   http.post('/api/auth/register', async ({ request }) => {
     const body = await request.json() as { name: string; email: string; password: string };
-    return HttpResponse.json({ id: 'u2', email: body.email, name: body.name }, { status: 201 });
+    const name = body.name?.trim();
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password?.trim();
+
+    if (!name || !email || !password) {
+      return HttpResponse.json({ message: 'Name, email, and password are required.' }, { status: 400 });
+    }
+
+    if (mockUsersByEmail.has(email)) {
+      return HttpResponse.json({ message: 'This email is already in use.' }, { status: 409 });
+    }
+
+    const newUser: MockAuthUser = {
+      id: `u${nextMockUserId++}`,
+      name,
+      email,
+      password,
+      roles: ['USER'],
+      profile: { ...SEEDED_PROFILE },
+    };
+
+    mockUsersByEmail.set(email, newUser);
+    mockUsersById.set(newUser.id, newUser);
+
+    return HttpResponse.json({ id: newUser.id, email: newUser.email, name: newUser.name }, { status: 201 });
   }),
 
   // Users
-  http.get('/api/users/me', () => HttpResponse.json(MOCK_USER)),
+  http.get('/api/users/me', ({ request }) => {
+    const user = getUserFromRequest(request);
+    if (!user) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return HttpResponse.json(toUserWithProfile(user));
+  }),
 
   http.put('/api/users/me', async ({ request }) => {
+    const user = getUserFromRequest(request);
+    if (!user) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json() as Partial<UserWithProfile>;
-    return HttpResponse.json({ ...MOCK_USER, ...body });
+    if (typeof body.name === 'string' && body.name.trim()) {
+      user.name = body.name.trim();
+    }
+    if (body.profile) {
+      user.profile = { ...user.profile, ...body.profile };
+    }
+
+    return HttpResponse.json(toUserWithProfile(user));
   }),
 
   // Restaurants
