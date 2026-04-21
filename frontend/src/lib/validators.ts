@@ -20,8 +20,8 @@ export const registerSchema = z
 export const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   deliveryAddress: z.string().min(5, 'Please enter a valid address'),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   dietaryPreferences: z.array(z.string()).optional(),
 });
 
