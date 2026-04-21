@@ -14,7 +14,10 @@ export function useRestaurants(params: RestaurantsParams) {
     queryKey: ['restaurants', params],
     queryFn: () =>
       apiClient
-        .get<PaginatedResponse<Restaurant>>('/api/restaurants', { params })
+        .get<PaginatedResponse<Restaurant>>('/api/restaurants', {
+          params,
+          paramsSerializer: { indexes: null },
+        })
         .then((r) => r.data),
   });
 }
