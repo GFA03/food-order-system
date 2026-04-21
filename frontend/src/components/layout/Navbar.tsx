@@ -1,8 +1,10 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { totalItems } = useCart();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -75,11 +77,16 @@ export default function Navbar() {
                 <NavLink
                   to="/cart"
                   className={({ isActive }) =>
-                    `text-xl transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
+                    `relative text-xl transition-colors ${isActive ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`
                   }
-                  aria-label="Cart"
+                  aria-label={`Cart, ${totalItems} items`}
                 >
                   🛒
+                  {totalItems > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {totalItems > 9 ? '9+' : totalItems}
+                    </span>
+                  )}
                 </NavLink>
                 <span className="text-sm text-gray-600 hidden sm:block">{user?.name}</span>
                 <button
