@@ -28,15 +28,15 @@ export const profileSchema = z.object({
 export const restaurantSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   description: z.string().min(5, 'Description is required'),
-  rating: z.coerce.number().min(0).max(5),
-  deliveryTime: z.coerce.number().min(1, 'Delivery time must be at least 1 minute'),
+  rating: z.number().min(0).max(5),
+  deliveryTime: z.number().min(1, 'Delivery time must be at least 1 minute'),
   cuisineTagIds: z.array(z.string()).optional(),
 });
 
 export const menuItemSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   description: z.string().min(5, 'Description is required'),
-  price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
+  price: z.number().min(0.01, 'Price must be greater than 0'),
 });
 
 export const cuisineTagSchema = z.object({

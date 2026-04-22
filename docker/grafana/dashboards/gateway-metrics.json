@@ -1,0 +1,51 @@
+{
+  "id": null,
+  "uid": "omnieats-gateway-metrics",
+  "title": "OmniEats — Gateway Metrics",
+  "tags": ["omnieats", "gateway"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests per Route (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (routeId)(rate(spring_cloud_gateway_requests_seconds_count[1m]))",
+          "legendFormat": "{{routeId}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Rate Limiter Denials (429s/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{status=\"429\"}[5m]))",
+          "legendFormat": "429 rate limit denials",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Response Time by Route (p95, s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, routeId)(rate(spring_cloud_gateway_requests_seconds_bucket[5m])))",
+          "legendFormat": "p95 {{routeId}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

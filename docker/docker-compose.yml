@@ -41,6 +41,7 @@ services:
       - identity-service
       - restaurant-service
       - ai-aggregator-service
+      - redis
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - IDENTITY_SERVICE_URL=http://identity-service:8081
@@ -107,6 +108,29 @@ services:
       - "3000:80"
     depends_on:
       - gateway-service
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: omnieats-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: omnieats-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
     restart: unless-stopped
 
 volumes:

@@ -1,0 +1,34 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://identity-service:8081
+          predicates:
+            - Path=/api/auth/**
+        - id: users-service
+          uri: http://identity-service:8081
+          predicates:
+            - Path=/api/users/**
+        - id: restaurant-service
+          uri: http://restaurant-service:8082
+          predicates:
+            - Path=/api/restaurants/**
+        - id: order-service
+          uri: http://restaurant-service:8082
+          predicates:
+            - Path=/api/orders/**
+        - id: ai-service
+          uri: http://ai-aggregator-service:8083
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+  data:
+    redis:
+      host: redis
+      port: 6379
