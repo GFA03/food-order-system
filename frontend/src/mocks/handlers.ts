@@ -108,7 +108,7 @@ const SEEDED_USER: MockAuthUser = {
   email: 'rares.papusoi@omnieats.dev',
   name: 'Rares Papusoi',
   password: 'password123',
-  roles: ['USER'],
+  roles: ['USER', 'ADMIN'],
   profile: SEEDED_PROFILE,
 };
 
