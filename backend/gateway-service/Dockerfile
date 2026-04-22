@@ -4,8 +4,8 @@ WORKDIR /app
 # Copy the entire backend project to ensure Maven finds all required submodule definitions
 COPY . .
 
-# Build the generic parent and the specific child module
-RUN ./mvnw clean package -pl gateway-service -am -DskipTests
+# Fix line endings and build
+RUN sed -i 's/\r//' mvnw && chmod +x mvnw && ./mvnw clean package -pl gateway-service -am -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app

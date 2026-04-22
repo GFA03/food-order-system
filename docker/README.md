@@ -46,3 +46,49 @@ To entirely **destroy** the containers and wipe your local database data (starti
 ```bash
 docker compose down -v
 ```
+
+---
+
+## 📊 Monitoring
+
+The stack includes Prometheus and Grafana for observability.
+
+### Access
+
+| Service | URL | Credentials |
+|---|---|---|
+| Prometheus | [http://localhost:9090](http://localhost:9090) | — |
+| Grafana | [http://localhost:3001](http://localhost:3001) | admin / admin |
+
+### Dashboards
+
+Three dashboards are auto-provisioned when Grafana starts:
+
+| Dashboard | Description |
+|---|---|
+| **OmniEats — HTTP Overview** | Request rate, latency (p50/p95/p99), and HTTP error rate (4xx/5xx) per service |
+| **OmniEats — JVM Metrics** | Heap used/committed, GC pause time, live threads, and CPU usage per service |
+| **OmniEats — Gateway Metrics** | Requests per route, rate limiter denials (429s), and response time by route |
+
+### Prerequisites for Metrics
+
+Each backend service must expose `/actuator/prometheus`. Add to each service's `pom.xml`:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-registry-prometheus</artifactId>
+</dependency>
+```
+
+And in `application.yml`:
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+```
