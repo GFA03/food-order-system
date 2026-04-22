@@ -10,6 +10,7 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
 jwt:
   secret: omnieats-test-secret-key-must-be-at-least-32-chars
@@ -18,4 +19,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,prometheus
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
