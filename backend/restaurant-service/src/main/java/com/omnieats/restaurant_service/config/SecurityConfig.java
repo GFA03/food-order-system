@@ -28,8 +28,10 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/**").permitAll()
-                // Require auth for all restaurant API endpoints (can be adjusted later if needed)
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+                .requestMatchers("/actuator/**", "/error").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/restaurants/**").permitAll()
+                // Require auth for other restaurant API endpoints (e.g. POST, PUT, DELETE)
                 .anyRequest().authenticated()
             );
 

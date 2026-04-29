@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
-    Page<MenuItem> findByRestaurantId(UUID restaurantId, Pageable pageable);
+    Page<MenuItem> findByRestaurant_Id(UUID restaurantId, Pageable pageable);
 }

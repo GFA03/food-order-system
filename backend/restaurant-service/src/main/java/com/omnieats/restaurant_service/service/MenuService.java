@@ -26,7 +26,7 @@ public class MenuService {
     public Page<MenuItem> getMenuItems(UUID restaurantId, Pageable pageable) {
         // Optional: verify restaurant exists
         restaurantService.getRestaurant(restaurantId);
-        return menuItemRepository.findByRestaurantId(restaurantId, pageable);
+        return menuItemRepository.findByRestaurant_Id(restaurantId, pageable);
     }
 
     public MenuItem getMenuItem(UUID id) {
