@@ -18,7 +18,7 @@ spring:
         - id: restaurant-service
           uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/api/restaurants/**
+            - Path=/api/restaurants, /api/restaurants/**
         - id: order-service
           uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
           predicates:
