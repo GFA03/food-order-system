@@ -4,6 +4,8 @@ import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
 import com.omnieats.restaurant_service.repository.RestaurantRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 @Service
 public class RestaurantService {
 
+    private static final Logger log = LoggerFactory.getLogger(RestaurantService.class);
+
     private final RestaurantRepository restaurantRepository;
     private final CuisineTagRepository cuisineTagRepository;
 
@@ -26,6 +30,7 @@ public class RestaurantService {
     }
 
     public Page<Restaurant> getRestaurants(List<UUID> tags, Pageable pageable) {
+        log.debug("Fetching restaurants: tags={}, page={}", tags, pageable.getPageNumber());
         if (tags != null && !tags.isEmpty()) {
             return restaurantRepository.findByCuisineTagsIdIn(tags, pageable);
         }
@@ -33,17 +38,25 @@ public class RestaurantService {
     }
 
     public Restaurant getRestaurant(UUID id) {
+        log.debug("Fetching restaurant: id={}", id);
         return restaurantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found"));
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found: id={}", id);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
+                });
     }
 
     public Restaurant createRestaurant(String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
+        log.debug("Creating restaurant: name={}, tagIds={}", name, tagIds);
         List<CuisineTag> tags = getTagsByIds(tagIds);
         Restaurant restaurant = new Restaurant(name, description, rating, deliveryTime, tags);
-        return restaurantRepository.save(restaurant);
+        Restaurant saved = restaurantRepository.save(restaurant);
+        log.info("Restaurant created: id={}, name={}", saved.getId(), name);
+        return saved;
     }
 
     public Restaurant updateRestaurant(UUID id, String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
+        log.debug("Updating restaurant: id={}", id);
         Restaurant restaurant = getRestaurant(id);
         restaurant.setName(name);
         restaurant.setDescription(description);
@@ -52,14 +65,18 @@ public class RestaurantService {
         if (tagIds != null) {
             restaurant.setCuisineTags(getTagsByIds(tagIds));
         }
-        return restaurantRepository.save(restaurant);
+        Restaurant saved = restaurantRepository.save(restaurant);
+        log.info("Restaurant updated: id={}, name={}", id, name);
+        return saved;
     }
 
     public void deleteRestaurant(UUID id) {
         if (!restaurantRepository.existsById(id)) {
+            log.error("Delete failed — restaurant not found: id={}", id);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
         }
         restaurantRepository.deleteById(id);
+        log.info("Restaurant deleted: id={}", id);
     }
 
     private List<CuisineTag> getTagsByIds(List<UUID> tagIds) {

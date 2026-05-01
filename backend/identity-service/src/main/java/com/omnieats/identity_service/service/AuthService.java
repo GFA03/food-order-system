@@ -2,6 +2,8 @@ package com.omnieats.identity_service.service;
 
 import com.omnieats.identity_service.model.User;
 import com.omnieats.identity_service.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,8 +36,10 @@ public class AuthService {
      */
     public User register(String name, String email, String rawPassword) {
         String normalizedEmail = email.trim().toLowerCase();
+        log.debug("Registering new user: email={}", normalizedEmail);
 
         if (userRepository.existsByEmail(normalizedEmail)) {
+            log.error("Registration failed — email already in use: {}", normalizedEmail);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This email is already in use.");
         }
 
@@ -44,7 +50,9 @@ public class AuthService {
                 List.of("USER")
         );
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.info("User registered: id={}, email={}", saved.getId(), normalizedEmail);
+        return saved;
     }
 
     /**
@@ -55,14 +63,20 @@ public class AuthService {
      */
     public String login(String email, String rawPassword) {
         String normalizedEmail = email.trim().toLowerCase();
+        log.debug("Login attempt: email={}", normalizedEmail);
 
         User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.error("Login failed — unknown email: {}", normalizedEmail);
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+                });
 
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            log.error("Login failed — wrong password for email: {}", normalizedEmail);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
+        log.info("User logged in: id={}, email={}", user.getId(), normalizedEmail);
         return jwtService.issueToken(user);
     }
 

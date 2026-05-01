@@ -4,6 +4,8 @@ import com.omnieats.identity_service.controller.dto.UpdateProfileRequest;
 import com.omnieats.identity_service.model.User;
 import com.omnieats.identity_service.model.UserProfile;
 import com.omnieats.identity_service.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,8 @@ import java.util.UUID;
 @Service
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -21,12 +25,17 @@ public class UserService {
     }
 
     public User getUserById(UUID userId) {
+        log.debug("Fetching user: id={}", userId);
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found: id={}", userId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+                });
     }
 
     @Transactional
     public User updateProfile(UUID userId, UpdateProfileRequest request) {
+        log.debug("Updating profile: userId={}", userId);
         User user = getUserById(userId);
 
         if (request.getName() != null) {
@@ -53,6 +62,8 @@ public class UserService {
             profile.getDietaryPreferences().addAll(request.getDietaryPreferences());
         }
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.info("Profile updated: userId={}", userId);
+        return saved;
     }
 }

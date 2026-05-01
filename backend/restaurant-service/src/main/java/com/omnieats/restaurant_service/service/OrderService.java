@@ -7,6 +7,8 @@ import com.omnieats.restaurant_service.model.OrderStatus;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.MenuItemRepository;
 import com.omnieats.restaurant_service.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ import java.util.UUID;
 
 @Service
 public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     public record OrderItemRequest(UUID menuItemId, int quantity) {}
 
@@ -38,9 +42,11 @@ public class OrderService {
     @Transactional
     public Order createOrder(UUID userId, UUID restaurantId, List<OrderItemRequest> itemRequests) {
         if (itemRequests == null || itemRequests.isEmpty()) {
+            log.error("Order creation failed — no items provided: userId={}, restaurantId={}", userId, restaurantId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order must contain at least one item");
         }
 
+        log.debug("Creating order: userId={}, restaurantId={}, itemCount={}", userId, restaurantId, itemRequests.size());
         Restaurant restaurant = restaurantService.getRestaurant(restaurantId);
 
         Order order = new Order(userId, restaurantId, restaurant.getName(), BigDecimal.ZERO);
@@ -50,15 +56,19 @@ public class OrderService {
 
         for (OrderItemRequest req : itemRequests) {
             if (req.quantity() <= 0) {
+                log.error("Order creation failed — invalid quantity {}: userId={}", req.quantity(), userId);
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item quantity must be positive");
             }
 
             MenuItem menuItem = menuItemRepository.findById(req.menuItemId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Menu item not found: " + req.menuItemId()));
+                    .orElseThrow(() -> {
+                        log.error("Order creation failed — menu item not found: menuItemId={}", req.menuItemId());
+                        return new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "Menu item not found: " + req.menuItemId());
+                    });
 
-            // Validate the menu item belongs to this restaurant
             if (!menuItem.getRestaurantId().equals(restaurantId)) {
+                log.error("Order creation failed — item {} does not belong to restaurant {}", req.menuItemId(), restaurantId);
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Menu item " + req.menuItemId() + " does not belong to restaurant " + restaurantId);
             }
@@ -76,7 +86,9 @@ public class OrderService {
         }
 
         order.setTotal(total);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order created: id={}, userId={}, restaurantId={}, total={}", saved.getId(), userId, restaurantId, total);
+        return saved;
     }
 
     public Page<Order> getOrders(UUID userId, Pageable pageable) {
@@ -94,9 +106,15 @@ public class OrderService {
 
     @Transactional
     public Order updateOrderStatus(UUID orderId, OrderStatus status) {
+        log.debug("Updating order status: orderId={}, newStatus={}", orderId, status);
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+                .orElseThrow(() -> {
+                    log.error("Order status update failed — order not found: id={}", orderId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+                });
         order.setStatus(status);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order status updated: id={}, status={}", orderId, status);
+        return saved;
     }
 }

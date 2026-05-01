@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="gateway-service"/>
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="identity-service"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -54,7 +54,7 @@
 
     <!-- Dev: enable DEBUG for application code -->
     <springProfile name="dev">
-        <logger name="com.omnieats.gateway_service" level="DEBUG"/>
+        <logger name="com.omnieats.identity_service" level="DEBUG"/>
     </springProfile>
 
     <!-- Test: WARN-only to console, no file I/O during test runs -->
