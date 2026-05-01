@@ -60,9 +60,9 @@ export default function RestaurantsPage() {
 
   const { data: tags } = useCuisineTags();
 
-  function toggleTag(tagName: string) {
+  function toggleTag(tagId: string) {
     setSelectedTags((prev) =>
-      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     );
     setPage(0);
   }
@@ -91,10 +91,10 @@ export default function RestaurantsPage() {
           {tags.map((tag) => (
             <button
               key={tag.id}
-              onClick={() => toggleTag(tag.name)}
-              aria-pressed={selectedTags.includes(tag.name)}
+              onClick={() => toggleTag(tag.id)}
+              aria-pressed={selectedTags.includes(tag.id)}
               className={`px-3 py-1.5 text-sm font-medium rounded-full border transition-colors ${
-                selectedTags.includes(tag.name)
+                selectedTags.includes(tag.id)
                   ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-white text-gray-600 border-gray-300 hover:border-orange-400 hover:text-orange-500'
               }`}

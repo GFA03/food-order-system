@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User } from '../types';
+import type { User, UserWithProfile } from '../types';
+import apiClient from '../api/client';
 
 interface AuthState {
   token: string | null;
@@ -48,12 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    // Keep localStorage in sync
     if (state.token) {
       localStorage.setItem('token', state.token);
     } else {
       localStorage.removeItem('token');
     }
+  }, [state.token]);
+
+  // Overwrite the optimistic boot-time user with the authoritative server response.
+  // The axios response interceptor handles 401 (clears token + redirects to /login).
+  useEffect(() => {
+    if (!state.token) return;
+    apiClient.get<UserWithProfile>('/api/users/me').then((r) => {
+      const { id, email, name, roles } = r.data;
+      setState((prev) => ({ ...prev, user: { id, email, name, roles } }));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.token]);
 
   function login(token: string, user: User) {
