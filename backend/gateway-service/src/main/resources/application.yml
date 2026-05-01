@@ -4,39 +4,14 @@ server:
 spring:
   application:
     name: gateway-service
+  profiles:
+    active: dev
   cloud:
     gateway:
-      routes:
-        - id: auth-service
-          uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/auth/**
-        - id: users-service
-          uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/users/**
-        - id: restaurant-service
-          uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
-          predicates:
-            - Path=/api/restaurants, /api/restaurants/**
-        - id: order-service
-          uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
-          predicates:
-            - Path=/api/orders/**
-        - id: ai-service
-          uri: ${AI_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/ai/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@userKeyResolver}"
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: 
+            allowedOrigins:
               - "http://localhost:3000"
               - "http://localhost:5173"
             allowedMethods: "*"
@@ -44,14 +19,6 @@ spring:
             allowCredentials: true
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin
-
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
-jwt:
-  secret: ${JWT_SECRET:omnieats-dev-secret-key-change-in-production}
 
 management:
   endpoints:
