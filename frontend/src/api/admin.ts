@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from './client';
-import type { Restaurant, MenuItem, CuisineTag } from '../types';
+import type { Restaurant, MenuItem, CuisineTag, Order, PaginatedResponse } from '../types';
 
 // ── Restaurants ───────────────────────────────────────────────────────────────
 
@@ -93,5 +93,30 @@ export function useDeleteCuisineTag() {
     mutationFn: (id: string) =>
       apiClient.delete(`/api/restaurants/tags/${id}`).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cuisineTags'] }),
+  });
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+
+export function useAdminOrders(params: { page: number; size: number }) {
+  return useQuery({
+    queryKey: ['admin-orders', params],
+    queryFn: () =>
+      apiClient
+        .get<PaginatedResponse<Order>>('/api/orders/admin', { params })
+        .then((r) => r.data),
+  });
+}
+
+export function useUpdateOrderStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Order['status'] }) =>
+      apiClient.put<Order>(`/api/orders/admin/${id}/status`, { status }).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['order'] });
+    },
   });
 }

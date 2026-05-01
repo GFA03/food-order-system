@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminRestaurantsPage from './pages/admin/AdminRestaurantsPage';
 import AdminMenuItemsPage from './pages/admin/AdminMenuItemsPage';
 import AdminCuisineTagsPage from './pages/admin/AdminCuisineTagsPage';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorPage from './pages/ErrorPage';
 
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
           { path: 'admin/restaurants', element: <AdminRestaurantsPage /> },
           { path: 'admin/restaurants/:id/menu', element: <AdminMenuItemsPage /> },
           { path: 'admin/cuisine-tags', element: <AdminCuisineTagsPage /> },
+          { path: 'admin/orders', element: <AdminOrdersPage /> },
         ],
       },
     ],

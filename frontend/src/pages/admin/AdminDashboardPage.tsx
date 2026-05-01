@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 const sections = [
   { title: 'Restaurants', description: 'Create, edit, and delete restaurants', href: '/admin/restaurants', icon: '🍽️' },
   { title: 'Cuisine Tags', description: 'Manage cuisine category tags', href: '/admin/cuisine-tags', icon: '🏷️' },
+  { title: 'Orders', description: 'View and update order statuses', href: '/admin/orders', icon: '📦' },
 ];
 
 export default function AdminDashboardPage() {
