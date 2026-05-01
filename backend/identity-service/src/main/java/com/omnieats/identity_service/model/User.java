@@ -32,6 +32,9 @@ public class User {
     @Column(name = "role")
     private List<String> roles = new ArrayList<>();
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private UserProfile profile;
+
     // ── Constructors ──────────────────────────────────────────────────────────
 
     public User() {}
@@ -79,5 +82,13 @@ public class User {
 
     public void setRoles(List<String> roles) {
         this.roles = roles;
+    }
+
+    public UserProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(UserProfile profile) {
+        this.profile = profile;
     }
 }
