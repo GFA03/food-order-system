@@ -5,9 +5,12 @@ import Pagination from '../../components/ui/Pagination';
 import { useToast } from '../../components/ui/Toast';
 import type { Order } from '../../types';
 
+const PAGE_SIZE_OPTIONS = [5, 10, 25];
+
 export default function AdminOrdersPage() {
   const [page, setPage] = useState(0);
-  const { data, isLoading } = useAdminOrders({ page, size: 10 });
+  const [pageSize, setPageSize] = useState(10);
+  const { data, isLoading } = useAdminOrders({ page, size: pageSize });
   const updateStatus = useUpdateOrderStatus();
   const { showToast } = useToast();
 
@@ -75,9 +78,15 @@ export default function AdminOrdersPage() {
               <div className="p-8 text-center text-gray-500">No orders found.</div>
             )}
           </div>
-          {data && data.totalPages > 1 && (
-            <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
-          )}
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages ?? 1}
+            totalElements={data?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+          />
         </>
       )}
     </div>

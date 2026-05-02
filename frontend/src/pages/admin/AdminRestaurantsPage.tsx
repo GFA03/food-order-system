@@ -10,13 +10,16 @@ import { useToast } from '../../components/ui/Toast';
 import type { Restaurant } from '../../types';
 import type { RestaurantFormData } from '../../lib/validators';
 
+const PAGE_SIZE_OPTIONS = [5, 10, 25];
+
 export default function AdminRestaurantsPage() {
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<Restaurant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Restaurant | null>(null);
 
-  const { data, isLoading } = useRestaurants({ page, size: 10, sort: 'rating,desc' });
+  const { data, isLoading } = useRestaurants({ page, size: pageSize, sort: 'rating,desc' });
   const createRestaurant = useCreateRestaurant();
   const updateRestaurant = useUpdateRestaurant();
   const deleteRestaurant = useDeleteRestaurant();
@@ -99,7 +102,15 @@ export default function AdminRestaurantsPage() {
               </tbody>
             </table>
           </div>
-          <Pagination currentPage={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages ?? 1}
+            totalElements={data?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+          />
         </>
       )}
 

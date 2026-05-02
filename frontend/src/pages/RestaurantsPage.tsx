@@ -46,14 +46,17 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
   );
 }
 
+const PAGE_SIZE_OPTIONS = [6, 12, 24];
+
 export default function RestaurantsPage() {
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(6);
   const [sort, setSort] = useState('rating,desc');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data, isLoading, isError } = useRestaurants({
     page,
-    size: 6,
+    size: pageSize,
     sort,
     tags: selectedTags,
   });
@@ -138,7 +141,11 @@ export default function RestaurantsPage() {
           <Pagination
             currentPage={page}
             totalPages={data?.totalPages ?? 1}
+            totalElements={data?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
             onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
           />
         </>
       )}

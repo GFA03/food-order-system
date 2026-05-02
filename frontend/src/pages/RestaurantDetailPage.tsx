@@ -40,11 +40,12 @@ function MenuItemCard({ item, onAddToCart }: MenuItemCardProps) {
 export default function RestaurantDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(8);
   const [sort, setSort] = useState('price,asc');
   const [pendingItem, setPendingItem] = useState<{ item: MenuItem; qty: number } | null>(null);
 
   const { data: restaurant, isLoading: loadingRestaurant, isError: errorRestaurant } = useRestaurant(id!);
-  const { data: menuData, isLoading: loadingMenu } = useMenuItems(id!, { page, size: 8, sort });
+  const { data: menuData, isLoading: loadingMenu } = useMenuItems(id!, { page, size: pageSize, sort });
   const { addItem, restaurantId: cartRestaurantId, clearCart } = useCart();
 
   function handleAddToCart(item: MenuItem, quantity: number) {
@@ -116,7 +117,15 @@ export default function RestaurantDetailPage() {
           <div className="space-y-3">
             {menuData?.content.map((item) => <MenuItemCard key={item.id} item={item} onAddToCart={handleAddToCart} />)}
           </div>
-          <Pagination currentPage={page} totalPages={menuData?.totalPages ?? 1} onPageChange={setPage} />
+          <Pagination
+            currentPage={page}
+            totalPages={menuData?.totalPages ?? 1}
+            totalElements={menuData?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={[4, 8, 16]}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+          />
         </>
       )}
 

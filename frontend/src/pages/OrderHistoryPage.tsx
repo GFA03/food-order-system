@@ -26,9 +26,12 @@ function OrderRowSkeleton() {
   );
 }
 
+const PAGE_SIZE_OPTIONS = [5, 10, 20];
+
 export default function OrderHistoryPage() {
   const [page, setPage] = useState(0);
-  const { data, isLoading, isError } = useOrders({ page, size: 10 });
+  const [pageSize, setPageSize] = useState(10);
+  const { data, isLoading, isError } = useOrders({ page, size: pageSize });
 
   return (
     <div>
@@ -61,7 +64,15 @@ export default function OrderHistoryPage() {
               </Link>
             ))}
           </div>
-          <Pagination currentPage={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages ?? 1}
+            totalElements={data?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+          />
         </>
       )}
     </div>

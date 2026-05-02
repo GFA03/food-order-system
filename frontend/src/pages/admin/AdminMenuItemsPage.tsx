@@ -19,7 +19,8 @@ export default function AdminMenuItemsPage() {
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null);
 
   const { data: restaurant } = useRestaurant(restaurantId!);
-  const { data: menuData, isLoading } = useMenuItems(restaurantId!, { page, size: 10, sort: 'price,asc' });
+  const [pageSize, setPageSize] = useState(10);
+  const { data: menuData, isLoading } = useMenuItems(restaurantId!, { page, size: pageSize, sort: 'price,asc' });
   const createItem = useCreateMenuItem(restaurantId!);
   const updateItem = useUpdateMenuItem(restaurantId!);
   const deleteItem = useDeleteMenuItem(restaurantId!);
@@ -97,7 +98,15 @@ export default function AdminMenuItemsPage() {
               </tbody>
             </table>
           </div>
-          <Pagination currentPage={page} totalPages={menuData?.totalPages ?? 1} onPageChange={setPage} />
+          <Pagination
+            currentPage={page}
+            totalPages={menuData?.totalPages ?? 1}
+            totalElements={menuData?.totalElements}
+            pageSize={pageSize}
+            pageSizeOptions={[5, 10, 25]}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+          />
         </>
       )}
 
