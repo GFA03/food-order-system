@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User, UserWithProfile } from '../types';
 import apiClient from '../api/client';
+import { clearToken, getToken, setToken } from '../lib/tokenStorage';
 
 interface AuthState {
   token: string | null;
@@ -9,7 +10,7 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User, persistent: boolean) => void;
   logout: () => void;
 }
 
@@ -34,7 +35,7 @@ function decodeTokenPayload(token: string): TokenPayload {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       const payload = decodeTokenPayload(token);
       const user: User = {
@@ -48,14 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { token: null, user: null, isAuthenticated: false };
   });
 
-  useEffect(() => {
-    if (state.token) {
-      localStorage.setItem('token', state.token);
-    } else {
-      localStorage.removeItem('token');
-    }
-  }, [state.token]);
-
   // Overwrite the optimistic boot-time user with the authoritative server response.
   // The axios response interceptor handles 401 (clears token + redirects to /login).
   useEffect(() => {
@@ -67,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.token]);
 
-  function login(token: string, user: User) {
-    localStorage.setItem('token', token);
+  function login(token: string, user: User, persistent: boolean) {
+    setToken(token, persistent);
     setState({ token, user, isAuthenticated: true });
   }
 
   function logout() {
-    localStorage.removeItem('token');
+    clearToken();
     setState({ token: null, user: null, isAuthenticated: false });
   }
 

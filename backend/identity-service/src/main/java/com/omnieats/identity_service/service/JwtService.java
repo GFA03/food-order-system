@@ -26,16 +26,23 @@ public class JwtService {
 
     private final SecretKey signingKey;
     private final long expirationMs;
+    private final long rememberMeExpirationMs;
 
     public JwtService(JwtProperties jwtProperties) {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = jwtProperties.getExpirationMs();
+        this.rememberMeExpirationMs = jwtProperties.getRememberMeExpirationMs();
     }
 
     public String issueToken(User user) {
+        return issueToken(user, false);
+    }
+
+    public String issueToken(User user, boolean rememberMe) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
+        long ttl = rememberMe ? rememberMeExpirationMs : expirationMs;
+        Date expiry = new Date(now.getTime() + ttl);
 
         return Jwts.builder()
                 .subject(user.getId().toString())

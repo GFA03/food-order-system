@@ -37,7 +37,7 @@ public class AuthController {
 
     // ── POST /api/auth/login ──────────────────────────────────────────────────
 
-    record LoginRequest(String email, String password) {}
+    record LoginRequest(String email, String password, Boolean rememberMe) {}
 
     /**
      * AuthResponse shape must match what the frontend's AuthContext.tsx expects:
@@ -50,7 +50,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         // authService.login throws 401 ResponseStatusException on bad credentials
-        String token = authService.login(request.email(), request.password());
+        boolean remember = Boolean.TRUE.equals(request.rememberMe());
+        String token = authService.login(request.email(), request.password(), remember);
 
         // Re-fetch the user to build the response DTO (token already validated internally)
         User user = authService.loadByEmail(request.email().trim().toLowerCase());

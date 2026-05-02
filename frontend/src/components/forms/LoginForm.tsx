@@ -16,12 +16,13 @@ export default function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { rememberMe: false },
   });
 
   async function onSubmit(data: LoginFormData) {
     try {
       const response = await loginMutation.mutateAsync(data);
-      login(response.token, response.user);
+      login(response.token, response.user, data.rememberMe ?? false);
       navigate('/restaurants');
     } catch {
       // error handled via loginMutation.error below
@@ -62,6 +63,18 @@ export default function LoginForm() {
         {errors.password && (
           <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
         )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          id="rememberMe"
+          type="checkbox"
+          {...register('rememberMe')}
+          className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+        />
+        <label htmlFor="rememberMe" className="text-sm text-gray-700">
+          Remember me
+        </label>
       </div>
 
       {loginMutation.isError && (

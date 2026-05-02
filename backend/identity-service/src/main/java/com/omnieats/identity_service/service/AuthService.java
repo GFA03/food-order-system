@@ -61,7 +61,7 @@ public class AuthService {
      * @return JWT string
      * @throws ResponseStatusException 401 if credentials are invalid
      */
-    public String login(String email, String rawPassword) {
+    public String login(String email, String rawPassword, boolean rememberMe) {
         String normalizedEmail = email.trim().toLowerCase();
         log.debug("Login attempt: email={}", normalizedEmail);
 
@@ -76,8 +76,8 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        log.info("User logged in: id={}, email={}", user.getId(), normalizedEmail);
-        return jwtService.issueToken(user);
+        log.info("User logged in: id={}, email={}, rememberMe={}", user.getId(), normalizedEmail, rememberMe);
+        return jwtService.issueToken(user, rememberMe);
     }
 
     /**

@@ -5,6 +5,7 @@ import type { AuthResponse } from '../types';
 interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 interface RegisterRequest {

@@ -84,7 +84,7 @@ class AuthServiceTest {
 
         // Act & Assert
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            authService.login(email, "password");
+            authService.login(email, "password", false);
         });
 
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
@@ -97,13 +97,13 @@ class AuthServiceTest {
         String email = "test@example.com";
         String rawPassword = "wrongPassword";
         User user = new User(email, "Test User", "correctHash", List.of("USER"));
-        
+
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(rawPassword, "correctHash")).thenReturn(false);
 
         // Act & Assert
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            authService.login(email, rawPassword);
+            authService.login(email, rawPassword, false);
         });
 
         assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
@@ -116,17 +116,36 @@ class AuthServiceTest {
         String email = "test@example.com";
         String rawPassword = "correctPassword";
         User user = new User(email, "Test User", "correctHash", List.of("USER"));
-        
+
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(rawPassword, "correctHash")).thenReturn(true);
-        when(jwtService.issueToken(user)).thenReturn("mocked.jwt.token");
+        when(jwtService.issueToken(user, false)).thenReturn("mocked.jwt.token");
 
         // Act
-        String token = authService.login(email, rawPassword);
+        String token = authService.login(email, rawPassword, false);
 
         // Assert
         assertEquals("mocked.jwt.token", token);
-        verify(jwtService, times(1)).issueToken(user);
+        verify(jwtService, times(1)).issueToken(user, false);
+    }
+
+    @Test
+    void login_ShouldForwardRememberMeFlag_WhenTrue() {
+        // Arrange
+        String email = "test@example.com";
+        String rawPassword = "correctPassword";
+        User user = new User(email, "Test User", "correctHash", List.of("USER"));
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(rawPassword, "correctHash")).thenReturn(true);
+        when(jwtService.issueToken(user, true)).thenReturn("long.lived.token");
+
+        // Act
+        String token = authService.login(email, rawPassword, true);
+
+        // Assert
+        assertEquals("long.lived.token", token);
+        verify(jwtService, times(1)).issueToken(user, true);
     }
     
     @Test
