@@ -71,6 +71,16 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Redis-backed caching of AI filter extraction (short-term response cache) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<!-- Spring AI: local LLM via Ollama -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>

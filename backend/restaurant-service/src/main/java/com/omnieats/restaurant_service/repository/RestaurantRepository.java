@@ -15,4 +15,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, UUID> {
     @Query("SELECT DISTINCT r FROM Restaurant r JOIN r.cuisineTags t WHERE t.id IN :tagIds")
     Page<Restaurant> findByCuisineTagsIdIn(@Param("tagIds") List<UUID> tagIds, Pageable pageable);
 
+    /** Highest-rated restaurants first; unrated ones last. Limit via {@link Pageable}. */
+    @Query("SELECT r FROM Restaurant r ORDER BY r.rating DESC NULLS LAST")
+    List<Restaurant> findTopRated(Pageable pageable);
+
 }

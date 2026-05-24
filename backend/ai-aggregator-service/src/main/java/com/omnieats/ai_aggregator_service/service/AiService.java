@@ -9,7 +9,6 @@ import com.omnieats.ai_aggregator_service.dto.SearchFilter;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -35,36 +34,24 @@ public class AiService {
 
     private static final int MAX_SUGGESTIONS = 6;
 
-    private static final String SYSTEM_PROMPT = """
-            You are a food-search assistant for a restaurant marketplace.
-            Extract the user's intent into the structured filter.
-            Only fill fields the user actually expressed; leave the rest empty.
-            Normalise cuisine names to capitalised singular nouns (e.g. "Italian", "Vegan").
-            Do not invent dishes or restaurants.""";
-
-    private final ChatClient chatClient;
+    private final LlmService llmService;
     private final RestaurantClient restaurantClient;
 
-    public AiService(ChatClient chatClient, RestaurantClient restaurantClient) {
-        this.chatClient = chatClient;
+    public AiService(LlmService llmService, RestaurantClient restaurantClient) {
+        this.llmService = llmService;
         this.restaurantClient = restaurantClient;
     }
 
     /**
      * Primary entry point. The circuit breaker wraps the LLM call; any failure (model down,
-     * timeout, open circuit) routes to {@link #keywordFallback}.
+     * timeout, open circuit) routes to {@link #keywordFallback}. The filter extraction itself
+     * is Redis-cached per prompt (see {@link LlmService}).
      */
     @CircuitBreaker(name = "ollama", fallbackMethod = "keywordFallback")
     public List<AiSuggestion> suggest(String prompt, String userId) {
         log.debug("AI suggest for user={} prompt='{}'", userId, prompt);
 
-        SearchFilter filter = chatClient.prompt()
-                .system(SYSTEM_PROMPT)
-                .user(prompt)
-                .call()
-                .entity(SearchFilter.class);
-
-        log.debug("LLM extracted filter: {}", filter);
+        SearchFilter filter = llmService.extractFilter(prompt);
 
         Set<String> terms = termsFrom(filter);
         if (terms.isEmpty()) {

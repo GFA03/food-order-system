@@ -1,12 +1,16 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
 import com.omnieats.restaurant_service.repository.RestaurantRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,6 +41,15 @@ public class RestaurantService {
         return restaurantRepository.findAll(pageable);
     }
 
+    /** Top-rated restaurants, cached in Redis (evicted on any restaurant write). */
+    @Cacheable("topRatedRestaurants")
+    public List<RestaurantSummaryDto> getTopRated() {
+        log.debug("Fetching top-rated restaurants (cache miss)");
+        return restaurantRepository.findTopRated(PageRequest.of(0, 10)).stream()
+                .map(RestaurantSummaryDto::from)
+                .toList();
+    }
+
     public Restaurant getRestaurant(UUID id) {
         log.debug("Fetching restaurant: id={}", id);
         return restaurantRepository.findById(id)
@@ -46,6 +59,7 @@ public class RestaurantService {
                 });
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public Restaurant createRestaurant(String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
         log.debug("Creating restaurant: name={}, tagIds={}", name, tagIds);
         List<CuisineTag> tags = getTagsByIds(tagIds);
@@ -55,6 +69,7 @@ public class RestaurantService {
         return saved;
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public Restaurant updateRestaurant(UUID id, String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
         log.debug("Updating restaurant: id={}", id);
         Restaurant restaurant = getRestaurant(id);
@@ -70,6 +85,7 @@ public class RestaurantService {
         return saved;
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public void deleteRestaurant(UUID id) {
         if (!restaurantRepository.existsById(id)) {
             log.error("Delete failed — restaurant not found: id={}", id);

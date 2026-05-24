@@ -1,5 +1,6 @@
 package com.omnieats.restaurant_service.controller;
 
+import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.service.RestaurantService;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,11 @@ public class RestaurantController {
             @RequestParam(required = false) List<UUID> tags,
             Pageable pageable) {
         return ResponseEntity.ok(restaurantService.getRestaurants(tags, pageable));
+    }
+
+    @GetMapping("/top-rated")
+    public ResponseEntity<List<RestaurantSummaryDto>> getTopRated() {
+        return ResponseEntity.ok(restaurantService.getTopRated());
     }
 
     @GetMapping("/{id}")

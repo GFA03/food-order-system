@@ -1,5 +1,6 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
@@ -78,6 +79,22 @@ class RestaurantServiceTest {
 
         assertEquals(1, result.getTotalElements());
         verify(restaurantRepository).findByCuisineTagsIdIn(List.of(tagId), PageRequest.of(0, 10));
+    }
+
+    @Test
+    void getTopRated_ReturnsMappedSummaryDtos() {
+        when(restaurantRepository.findTopRated(any(Pageable.class))).thenReturn(List.of(restaurant));
+
+        List<RestaurantSummaryDto> result = restaurantService.getTopRated();
+
+        assertEquals(1, result.size());
+        RestaurantSummaryDto dto = result.get(0);
+        assertEquals(restaurantId.toString(), dto.id());
+        assertEquals("Pizza Place", dto.name());
+        assertEquals(4.5, dto.rating());
+        assertEquals(1, dto.cuisineTags().size());
+        assertEquals("Italian", dto.cuisineTags().get(0).name());
+        assertEquals(tagId.toString(), dto.cuisineTags().get(0).id());
     }
 
     @Test
