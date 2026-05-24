@@ -104,6 +104,15 @@ services:
       start_period: 45s
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: omnieats-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
   ai-aggregator-service:
     build:
       context: ../backend
@@ -111,8 +120,14 @@ services:
     container_name: omnieats-ai
     ports:
       - "8083:8083"
+    depends_on:
+      restaurant-service:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama:11434
     restart: unless-stopped
 
   frontend:
@@ -151,3 +166,4 @@ services:
 
 volumes:
   postgres-data:
+  ollama-data:
