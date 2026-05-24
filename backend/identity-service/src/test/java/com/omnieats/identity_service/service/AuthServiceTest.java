@@ -1,5 +1,8 @@
 package com.omnieats.identity_service.service;
 
+import com.omnieats.identity_service.exception.EmailAlreadyInUseException;
+import com.omnieats.identity_service.exception.InvalidCredentialsException;
+import com.omnieats.identity_service.exception.UserNotFoundException;
 import com.omnieats.identity_service.model.User;
 import com.omnieats.identity_service.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -7,9 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,12 +42,11 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
         // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+        EmailAlreadyInUseException exception = assertThrows(EmailAlreadyInUseException.class, () -> {
             authService.register("Test User", email, "password");
         });
 
-        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        assertEquals("This email is already in use.", exception.getReason());
+        assertEquals("This email is already in use.", exception.getMessage());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -83,12 +83,11 @@ class AuthServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+        InvalidCredentialsException exception = assertThrows(InvalidCredentialsException.class, () -> {
             authService.login(email, "password", false);
         });
 
-        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
-        assertEquals("Invalid credentials", exception.getReason());
+        assertEquals("Invalid credentials", exception.getMessage());
     }
 
     @Test
@@ -102,12 +101,11 @@ class AuthServiceTest {
         when(passwordEncoder.matches(rawPassword, "correctHash")).thenReturn(false);
 
         // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+        InvalidCredentialsException exception = assertThrows(InvalidCredentialsException.class, () -> {
             authService.login(email, rawPassword, false);
         });
 
-        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
-        assertEquals("Invalid credentials", exception.getReason());
+        assertEquals("Invalid credentials", exception.getMessage());
     }
 
     @Test
@@ -155,12 +153,11 @@ class AuthServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
             authService.loadByEmail(email);
         });
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("User not found", exception.getReason());
+        assertEquals("User not found", exception.getMessage());
     }
 
     @Test

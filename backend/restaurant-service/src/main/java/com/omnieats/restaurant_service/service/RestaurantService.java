@@ -1,6 +1,8 @@
 package com.omnieats.restaurant_service.service;
 
 import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.RestaurantNotFoundException;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
@@ -12,9 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +55,7 @@ public class RestaurantService {
         return restaurantRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Restaurant not found: id={}", id);
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
+                    return new RestaurantNotFoundException("Restaurant not found: " + id);
                 });
     }
 
@@ -89,7 +89,7 @@ public class RestaurantService {
     public void deleteRestaurant(UUID id) {
         if (!restaurantRepository.existsById(id)) {
             log.error("Delete failed — restaurant not found: id={}", id);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
+            throw new RestaurantNotFoundException("Restaurant not found: " + id);
         }
         restaurantRepository.deleteById(id);
         log.info("Restaurant deleted: id={}", id);
@@ -101,7 +101,7 @@ public class RestaurantService {
         }
         List<CuisineTag> foundTags = cuisineTagRepository.findAllById(tagIds);
         if (foundTags.size() != tagIds.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more cuisine tags not found");
+            throw new BadRequestException("One or more cuisine tags not found");
         }
         return foundTags;
     }

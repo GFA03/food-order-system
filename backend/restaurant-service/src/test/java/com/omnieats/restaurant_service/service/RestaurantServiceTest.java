@@ -1,6 +1,8 @@
 package com.omnieats.restaurant_service.service;
 
 import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.RestaurantNotFoundException;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
@@ -16,7 +18,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -111,7 +112,7 @@ class RestaurantServiceTest {
     void getRestaurant_NotFound_Throws404() {
         when(restaurantRepository.findById(restaurantId)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class, () -> restaurantService.getRestaurant(restaurantId));
+        assertThrows(RestaurantNotFoundException.class, () -> restaurantService.getRestaurant(restaurantId));
     }
 
     @Test
@@ -130,7 +131,7 @@ class RestaurantServiceTest {
     void createRestaurant_MissingTags_Throws400() {
         when(cuisineTagRepository.findAllById(List.of(tagId))).thenReturn(List.of());
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> restaurantService.createRestaurant("Pizza Place", "Italian", 4.5, 30, List.of(tagId)));
     }
 
@@ -169,7 +170,7 @@ class RestaurantServiceTest {
     void deleteRestaurant_NotFound_Throws404() {
         when(restaurantRepository.existsById(restaurantId)).thenReturn(false);
 
-        assertThrows(ResponseStatusException.class, () -> restaurantService.deleteRestaurant(restaurantId));
+        assertThrows(RestaurantNotFoundException.class, () -> restaurantService.deleteRestaurant(restaurantId));
         verify(restaurantRepository, never()).deleteById(any());
     }
 }

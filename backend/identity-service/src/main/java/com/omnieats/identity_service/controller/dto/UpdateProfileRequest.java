@@ -1,10 +1,16 @@
 package com.omnieats.identity_service.controller.dto;
 
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
 public class UpdateProfileRequest {
+    @Size(max = 100)
     private String name;
+
+    @Size(max = 255)
     private String deliveryAddress;
+
     private Double latitude;
     private Double longitude;
     private List<String> dietaryPreferences;

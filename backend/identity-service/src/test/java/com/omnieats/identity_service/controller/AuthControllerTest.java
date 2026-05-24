@@ -2,6 +2,8 @@ package com.omnieats.identity_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.omnieats.identity_service.config.SecurityConfig;
+import com.omnieats.identity_service.exception.EmailAlreadyInUseException;
+import com.omnieats.identity_service.exception.InvalidCredentialsException;
 import com.omnieats.identity_service.model.User;
 import com.omnieats.identity_service.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,5 +103,47 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value(mockToken));
 
         verify(authService).login(request.email(), request.password(), true);
+    }
+
+    // ── Bean Validation + global exception handling ──────────────────────────────
+
+    @Test
+    void register_InvalidBody_Returns400() throws Exception {
+        // blank name, malformed email, too-short password → MethodArgumentNotValidException → 400
+        String body = "{\"name\":\"\",\"email\":\"not-an-email\",\"password\":\"123\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"));
+    }
+
+    @Test
+    void register_DuplicateEmail_Returns409() throws Exception {
+        when(authService.register(anyString(), anyString(), anyString()))
+                .thenThrow(new EmailAlreadyInUseException("This email is already in use."));
+
+        String body = "{\"name\":\"Test User\",\"email\":\"test@example.com\",\"password\":\"password\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void login_BadCredentials_Returns401() throws Exception {
+        when(authService.login(anyString(), anyString(), anyBoolean()))
+                .thenThrow(new InvalidCredentialsException("Invalid credentials"));
+
+        String body = "{\"email\":\"test@example.com\",\"password\":\"wrongpass\"}";
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
     }
 }

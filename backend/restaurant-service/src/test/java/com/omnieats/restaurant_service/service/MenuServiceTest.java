@@ -1,5 +1,7 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.MenuItemNotFoundException;
 import com.omnieats.restaurant_service.model.MenuItem;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.MenuItemRepository;
@@ -14,7 +16,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -86,7 +87,7 @@ public class MenuServiceTest {
     void testGetMenuItem_NotFound() {
         when(menuItemRepository.findById(menuItemId)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class, () -> menuService.getMenuItem(menuItemId));
+        assertThrows(MenuItemNotFoundException.class, () -> menuService.getMenuItem(menuItemId));
     }
 
     @Test
@@ -118,7 +119,7 @@ public class MenuServiceTest {
         UUID otherRestaurantId = UUID.randomUUID();
         when(menuItemRepository.findById(menuItemId)).thenReturn(Optional.of(menuItem));
 
-        assertThrows(ResponseStatusException.class, () -> 
+        assertThrows(BadRequestException.class, () ->
             menuService.updateMenuItem(otherRestaurantId, menuItemId, "Cheese Burger", "With cheese", BigDecimal.valueOf(12.99))
         );
     }
@@ -137,7 +138,7 @@ public class MenuServiceTest {
         UUID otherRestaurantId = UUID.randomUUID();
         when(menuItemRepository.findById(menuItemId)).thenReturn(Optional.of(menuItem));
 
-        assertThrows(ResponseStatusException.class, () -> 
+        assertThrows(BadRequestException.class, () ->
             menuService.deleteMenuItem(otherRestaurantId, menuItemId)
         );
     }

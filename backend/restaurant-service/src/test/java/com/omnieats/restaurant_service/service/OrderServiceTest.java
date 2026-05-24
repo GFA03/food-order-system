@@ -1,5 +1,8 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.MenuItemNotFoundException;
+import com.omnieats.restaurant_service.exception.OrderNotFoundException;
 import com.omnieats.restaurant_service.model.MenuItem;
 import com.omnieats.restaurant_service.model.Order;
 import com.omnieats.restaurant_service.model.OrderStatus;
@@ -17,7 +20,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -76,14 +78,14 @@ class OrderServiceTest {
 
     @Test
     void createOrder_EmptyItems_Throws400() {
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> orderService.createOrder(userId, restaurantId, Collections.emptyList()));
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals("Order must contain at least one item", ex.getMessage());
     }
 
     @Test
     void createOrder_NullItems_Throws400() {
-        assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> orderService.createOrder(userId, restaurantId, null));
     }
 
@@ -92,7 +94,7 @@ class OrderServiceTest {
         when(restaurantService.getRestaurant(restaurantId)).thenReturn(restaurant);
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> orderService.createOrder(userId, restaurantId,
                         List.of(new OrderService.OrderItemRequest(menuItemId, 0))));
     }
@@ -103,7 +105,7 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(menuItemRepository.findById(menuItemId)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(MenuItemNotFoundException.class,
                 () -> orderService.createOrder(userId, restaurantId,
                         List.of(new OrderService.OrderItemRequest(menuItemId, 1))));
     }
@@ -120,7 +122,7 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(menuItemRepository.findById(menuItemId)).thenReturn(Optional.of(otherItem));
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> orderService.createOrder(userId, restaurantId,
                         List.of(new OrderService.OrderItemRequest(menuItemId, 1))));
     }
@@ -150,7 +152,7 @@ class OrderServiceTest {
         UUID orderId = UUID.randomUUID();
         when(orderRepository.findByIdAndUserId(orderId, userId)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class, () -> orderService.getOrder(userId, orderId));
+        assertThrows(OrderNotFoundException.class, () -> orderService.getOrder(userId, orderId));
     }
 
     @Test
@@ -169,7 +171,7 @@ class OrderServiceTest {
         UUID orderId = UUID.randomUUID();
         when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(OrderNotFoundException.class,
                 () -> orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED));
     }
 

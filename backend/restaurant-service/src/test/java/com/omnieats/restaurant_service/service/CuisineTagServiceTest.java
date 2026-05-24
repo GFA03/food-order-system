@@ -1,5 +1,7 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.CuisineTagNotFoundException;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
 import org.junit.jupiter.api.Test;
@@ -8,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,19 +54,19 @@ class CuisineTagServiceTest {
 
     @Test
     void createTag_EmptyName_Throws400() {
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> cuisineTagService.createTag(""));
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals("Tag name cannot be empty", ex.getMessage());
     }
 
     @Test
     void createTag_BlankName_Throws400() {
-        assertThrows(ResponseStatusException.class, () -> cuisineTagService.createTag("   "));
+        assertThrows(BadRequestException.class, () -> cuisineTagService.createTag("   "));
     }
 
     @Test
     void createTag_NullName_Throws400() {
-        assertThrows(ResponseStatusException.class, () -> cuisineTagService.createTag(null));
+        assertThrows(BadRequestException.class, () -> cuisineTagService.createTag(null));
     }
 
     @Test
@@ -83,9 +84,7 @@ class CuisineTagServiceTest {
         UUID id = UUID.randomUUID();
         when(cuisineTagRepository.existsById(id)).thenReturn(false);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> cuisineTagService.deleteTag(id));
-        assertEquals(404, ex.getStatusCode().value());
+        assertThrows(CuisineTagNotFoundException.class, () -> cuisineTagService.deleteTag(id));
         verify(cuisineTagRepository, never()).deleteById(any());
     }
 }

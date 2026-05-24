@@ -3,6 +3,7 @@ package com.omnieats.identity_service.controller;
 import com.omnieats.identity_service.controller.dto.UpdateProfileRequest;
 import com.omnieats.identity_service.model.User;
 import com.omnieats.identity_service.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -25,7 +26,7 @@ public class UserController {
 
     @PutMapping("/me")
     public User updateProfile(@RequestHeader("X-User-Id") String userIdHeader,
-                              @RequestBody UpdateProfileRequest request) {
+                              @Valid @RequestBody UpdateProfileRequest request) {
         UUID userId = UUID.fromString(userIdHeader);
         return userService.updateProfile(userId, request);
     }

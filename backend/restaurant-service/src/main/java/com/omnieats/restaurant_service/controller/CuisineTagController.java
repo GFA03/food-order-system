@@ -2,6 +2,8 @@ package com.omnieats.restaurant_service.controller;
 
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.service.CuisineTagService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +27,11 @@ public class CuisineTagController {
         return ResponseEntity.ok(cuisineTagService.getAllTags());
     }
 
-    record CreateTagRequest(String name) {}
+    record CreateTagRequest(@NotBlank String name) {}
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<CuisineTag> createTag(@RequestBody CreateTagRequest request) {
+    public ResponseEntity<CuisineTag> createTag(@Valid @RequestBody CreateTagRequest request) {
         CuisineTag tag = cuisineTagService.createTag(request.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(tag);
     }
