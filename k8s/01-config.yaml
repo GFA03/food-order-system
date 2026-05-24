@@ -1,0 +1,34 @@
+# Centralized non-secret configuration (req II.1). Every backend reads these via envFrom;
+# the values reuse the `docker` Spring profile's service-name DNS, so no code changes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: omnieats-config
+  namespace: omnieats
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  # Redis (gateway rate-limiting, restaurant + ai caching)
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
+  # Local LLM parameters
+  SPRING_AI_OLLAMA_BASE_URL: "http://ollama:11434"
+  SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: "llama3.1:8b"
+  # Datasource (password lives in the Secret)
+  SPRING_DATASOURCE_USERNAME: "root"
+  IDENTITY_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/identity_db"
+  RESTAURANT_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/restaurant_db"
+  # Gateway downstream targets (gateway also hardcodes these names in application-docker.yml)
+  IDENTITY_SERVICE_URL: "http://identity-service:8081"
+  RESTAURANT_SERVICE_URL: "http://restaurant-service:8082"
+  AI_SERVICE_URL: "http://ai-aggregator-service:8083"
+---
+# Mounted into the postgres container's init dir to create the two databases on first boot.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: omnieats
+data:
+  init-db.sql: |
+    CREATE DATABASE identity_db;
+    CREATE DATABASE restaurant_db;
