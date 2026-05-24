@@ -1,0 +1,17 @@
+# Build outputs — Maven rebuilds these inside the image (mvnw clean package)
+**/target/
+
+# Runtime logs written by the services locally
+**/logs/
+*.log
+
+# IDE / editor / OS cruft
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# VCS metadata (not needed to build)
+.git/
+.gitignore
+.gitattributes
