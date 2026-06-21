@@ -1,7 +1,14 @@
 package com.omnieats.restaurant_service.controller;
 
+import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.service.RestaurantService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -29,16 +36,26 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getRestaurants(tags, pageable));
     }
 
+    @GetMapping("/top-rated")
+    public ResponseEntity<List<RestaurantSummaryDto>> getTopRated() {
+        return ResponseEntity.ok(restaurantService.getTopRated());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Restaurant> getRestaurant(@PathVariable UUID id) {
         return ResponseEntity.ok(restaurantService.getRestaurant(id));
     }
 
-    record CreateRestaurantRequest(String name, String description, Double rating, Integer deliveryTime, List<UUID> cuisineTagIds) {}
+    record CreateRestaurantRequest(
+            @NotBlank String name,
+            @Size(max = 1000) String description,
+            @DecimalMin("0.0") @DecimalMax("5.0") Double rating,
+            @Positive Integer deliveryTime,
+            List<UUID> cuisineTagIds) {}
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Restaurant> createRestaurant(@RequestBody CreateRestaurantRequest request) {
+    public ResponseEntity<Restaurant> createRestaurant(@Valid @RequestBody CreateRestaurantRequest request) {
         Restaurant restaurant = restaurantService.createRestaurant(
                 request.name(), request.description(), request.rating(), request.deliveryTime(), request.cuisineTagIds()
         );
@@ -47,7 +64,7 @@ public class RestaurantController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable UUID id, @RequestBody CreateRestaurantRequest request) {
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable UUID id, @Valid @RequestBody CreateRestaurantRequest request) {
         Restaurant restaurant = restaurantService.updateRestaurant(
                 id, request.name(), request.description(), request.rating(), request.deliveryTime(), request.cuisineTagIds()
         );

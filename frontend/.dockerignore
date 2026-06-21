@@ -1,0 +1,20 @@
+# Installed dependencies — the image runs `npm install` itself; copying the host
+# node_modules would overwrite that and can break the build (platform mismatch).
+node_modules
+
+# Build output — Vite regenerates this inside the image (npm run build)
+dist
+
+# IDE / OS cruft
+.vscode/
+.idea/
+.DS_Store
+
+# Local env + logs
+.env
+.env.*
+*.log
+
+# VCS metadata
+.git/
+.gitignore

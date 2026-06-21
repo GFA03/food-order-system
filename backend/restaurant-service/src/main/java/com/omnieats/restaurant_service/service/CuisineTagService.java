@@ -1,12 +1,12 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.CuisineTagNotFoundException;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class CuisineTagService {
     public CuisineTag createTag(String name) {
         if (name == null || name.trim().isEmpty()) {
             log.error("Tag creation failed — name is blank");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tag name cannot be empty");
+            throw new BadRequestException("Tag name cannot be empty");
         }
         CuisineTag tag = new CuisineTag(name.trim());
         CuisineTag saved = cuisineTagRepository.save(tag);
@@ -41,7 +41,7 @@ public class CuisineTagService {
     public void deleteTag(UUID id) {
         if (!cuisineTagRepository.existsById(id)) {
             log.error("Tag deletion failed — tag not found: id={}", id);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag not found");
+            throw new CuisineTagNotFoundException("Tag not found: " + id);
         }
         cuisineTagRepository.deleteById(id);
         log.info("Cuisine tag deleted: id={}", id);

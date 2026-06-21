@@ -1,6 +1,8 @@
 package com.omnieats.restaurant_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.RestaurantNotFoundException;
 import com.omnieats.restaurant_service.model.MenuItem;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.service.MenuService;
@@ -102,5 +104,58 @@ public class MenuItemControllerTest {
                 .andExpect(status().isNoContent());
 
         Mockito.verify(menuService, Mockito.times(1)).deleteMenuItem(restaurantId, menuItemId);
+    }
+
+    // ── Bean Validation + global exception handling ──────────────────────────────
+
+    @Test
+    void createMenuItem_BlankName_Returns400() throws Exception {
+        // @NotBlank name violated → MethodArgumentNotValidException → advice → 400
+        String requestJson = "{\"name\":\"\",\"description\":\"x\",\"price\":15.99}";
+
+        mockMvc.perform(post("/api/restaurants/{restaurantId}/menu", restaurantId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"));
+    }
+
+    @Test
+    void createMenuItem_NegativePrice_Returns400() throws Exception {
+        // @Positive price violated → 400
+        String requestJson = "{\"name\":\"Pizza\",\"description\":\"x\",\"price\":-5}";
+
+        mockMvc.perform(post("/api/restaurants/{restaurantId}/menu", restaurantId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createMenuItem_RestaurantNotFound_Returns404() throws Exception {
+        when(menuService.createMenuItem(any(), any(), any(), any()))
+                .thenThrow(new RestaurantNotFoundException("Restaurant not found"));
+
+        String requestJson = "{\"name\":\"Pizza\",\"description\":\"x\",\"price\":15.99}";
+
+        mockMvc.perform(post("/api/restaurants/{restaurantId}/menu", restaurantId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void updateMenuItem_WrongRestaurant_Returns400() throws Exception {
+        when(menuService.updateMenuItem(any(), any(), any(), any(), any()))
+                .thenThrow(new BadRequestException("Menu item does not belong to the given restaurant"));
+
+        String requestJson = "{\"name\":\"Pizza\",\"description\":\"x\",\"price\":15.99}";
+
+        mockMvc.perform(put("/api/restaurants/{restaurantId}/menu/{id}", restaurantId, menuItemId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad request"));
     }
 }

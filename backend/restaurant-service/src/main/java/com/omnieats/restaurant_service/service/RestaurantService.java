@@ -1,16 +1,20 @@
 package com.omnieats.restaurant_service.service;
 
+import com.omnieats.restaurant_service.dto.RestaurantSummaryDto;
+import com.omnieats.restaurant_service.exception.BadRequestException;
+import com.omnieats.restaurant_service.exception.RestaurantNotFoundException;
 import com.omnieats.restaurant_service.model.CuisineTag;
 import com.omnieats.restaurant_service.model.Restaurant;
 import com.omnieats.restaurant_service.repository.CuisineTagRepository;
 import com.omnieats.restaurant_service.repository.RestaurantRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,15 +41,25 @@ public class RestaurantService {
         return restaurantRepository.findAll(pageable);
     }
 
+    /** Top-rated restaurants, cached in Redis (evicted on any restaurant write). */
+    @Cacheable("topRatedRestaurants")
+    public List<RestaurantSummaryDto> getTopRated() {
+        log.debug("Fetching top-rated restaurants (cache miss)");
+        return restaurantRepository.findTopRated(PageRequest.of(0, 10)).stream()
+                .map(RestaurantSummaryDto::from)
+                .toList();
+    }
+
     public Restaurant getRestaurant(UUID id) {
         log.debug("Fetching restaurant: id={}", id);
         return restaurantRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Restaurant not found: id={}", id);
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
+                    return new RestaurantNotFoundException("Restaurant not found: " + id);
                 });
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public Restaurant createRestaurant(String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
         log.debug("Creating restaurant: name={}, tagIds={}", name, tagIds);
         List<CuisineTag> tags = getTagsByIds(tagIds);
@@ -55,6 +69,7 @@ public class RestaurantService {
         return saved;
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public Restaurant updateRestaurant(UUID id, String name, String description, Double rating, Integer deliveryTime, List<UUID> tagIds) {
         log.debug("Updating restaurant: id={}", id);
         Restaurant restaurant = getRestaurant(id);
@@ -70,10 +85,11 @@ public class RestaurantService {
         return saved;
     }
 
+    @CacheEvict(value = "topRatedRestaurants", allEntries = true)
     public void deleteRestaurant(UUID id) {
         if (!restaurantRepository.existsById(id)) {
             log.error("Delete failed — restaurant not found: id={}", id);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found");
+            throw new RestaurantNotFoundException("Restaurant not found: " + id);
         }
         restaurantRepository.deleteById(id);
         log.info("Restaurant deleted: id={}", id);
@@ -85,7 +101,7 @@ public class RestaurantService {
         }
         List<CuisineTag> foundTags = cuisineTagRepository.findAllById(tagIds);
         if (foundTags.size() != tagIds.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more cuisine tags not found");
+            throw new BadRequestException("One or more cuisine tags not found");
         }
         return foundTags;
     }

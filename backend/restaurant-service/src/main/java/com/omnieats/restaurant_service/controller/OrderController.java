@@ -3,6 +3,11 @@ package com.omnieats.restaurant_service.controller;
 import com.omnieats.restaurant_service.model.Order;
 import com.omnieats.restaurant_service.model.OrderStatus;
 import com.omnieats.restaurant_service.service.OrderService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,14 +30,16 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    record OrderItemRequest(String menuItemId, int quantity) {}
+    record OrderItemRequest(@NotBlank String menuItemId, @Min(1) int quantity) {}
 
-    record CreateOrderRequest(String restaurantId, List<OrderItemRequest> items) {}
+    record CreateOrderRequest(
+            @NotBlank String restaurantId,
+            @NotEmpty List<@Valid OrderItemRequest> items) {}
 
     @PostMapping
     public ResponseEntity<Order> createOrder(
             @AuthenticationPrincipal String userId,
-            @RequestBody CreateOrderRequest request) {
+            @Valid @RequestBody CreateOrderRequest request) {
 
         if (userId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -81,13 +88,13 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders(pageable));
     }
 
-    record UpdateOrderStatusRequest(OrderStatus status) {}
+    record UpdateOrderStatusRequest(@NotNull OrderStatus status) {}
 
     @PutMapping("/admin/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Order> updateOrderStatus(
             @PathVariable UUID id,
-            @RequestBody UpdateOrderStatusRequest request) {
+            @Valid @RequestBody UpdateOrderStatusRequest request) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, request.status()));
     }
 }
